@@ -1,0 +1,10 @@
+<%ofc = image_path("open-flash-chart.swf",:plugin => "charge-view")%>
+<%=javascript_include_tag("swfobject.js",:plugin => "charge-view")%>
+<script type="text/javascript">
+swfobject.embedSWF(
+  "<%=ofc%>", "my_chart", "800", "400",
+  "9.0.0", "expressInstall.swf",
+  {"data-file":"<%=url_for(:action => 'data', :controller => 'charge') %>"}
+  );
+</script>
+<div id="my_chart"></div>

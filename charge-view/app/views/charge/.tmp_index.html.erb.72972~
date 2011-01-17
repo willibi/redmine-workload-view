@@ -1,0 +1,18 @@
+<!-- image_tag( url_for(:controller => "charge", :action => "graph") )-->
+<%= @graph %>
+<table>
+	<tr>
+		<th>Name</th>
+		<th>Mail</th>
+		<th>Open Issues</th>
+		<th>Estimated_hours</th>
+	</tr>
+<%for user in @users%>
+	<tr>
+		<td><%=user.name%></td>
+		<td><%=user.mail%></td>
+		<td><%=issue_count_open_issues(user)%></td>
+		<td><%=user_estimated_hours(user)%></td>
+	</tr>
+<% end %>
+</table>

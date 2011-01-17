@@ -1,0 +1,6 @@
+<% if allowed_management? %>
+<div class="box">
+	<%= link_to "Configure", :action => "modify", :id => @project.id %>
+</div>
+<% end %>
+<%= render :partial => 'dashlet' %>
