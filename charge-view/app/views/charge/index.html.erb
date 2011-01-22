@@ -1,10 +1,21 @@
-<%ofc = image_path("open-flash-chart.swf",:plugin => "charge-view")%>
 <%=javascript_include_tag("swfobject.js",:plugin => "charge-view")%>
-<script type="text/javascript">
-swfobject.embedSWF(
-  "<%=ofc%>", "my_chart", "800", "400",
-  "9.0.0", "expressInstall.swf",
-  {"data-file":"<%=url_for(:action => 'data', :controller => 'charge') %>"}
-  );
-</script>
-<div id="my_chart"></div>
+<%start = Date.new(2010,6,1)%>
+<%stop = Date.new(2011,6,1)%>
+<%period = 'month'%>
+<%for user in @users%>
+	<%url = url_for(:action => 'data', :controller => 'charge') %>
+	<%url += '?user=' + user.id.to_s %>
+    <%url += '&start=' + start.to_s %>
+    <%url += '&stop=' + stop.to_s %>
+    <%url += '&period=' + period %>
+	<h2><%=user.name%></h2>
+	<script type="text/javascript">
+	swfobject.embedSWF(
+	  "<%=image_path('open-flash-chart.swf',:plugin => 'charge-view')%>",
+	  "workload_<%=user.id%>", "800", "150",
+	  "9.0.0", "expressInstall.swf",
+	  {"data-file":"<%=CGI::escape(url)%>"}
+	  );
+	</script>
+	<div id="workload_<%=user.id%>"></div>
+<% end %>

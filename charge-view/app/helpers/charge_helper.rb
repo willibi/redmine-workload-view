@@ -1,7 +1,5 @@
 module ChargeHelper
   
-  require 'gruff'
-  
   def issue_count_open_issues(user)
     return open_issues(user).count
   end
