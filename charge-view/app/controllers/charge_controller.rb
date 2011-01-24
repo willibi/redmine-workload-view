@@ -9,12 +9,18 @@ class ChargeController < ApplicationController
   layout 'base'
   
   def index
+    
+    # TODO: add permission check  
+    
     @users = User.find(:all,
                        :order => "firstName",
                        :limit => 40)
   end
   
   def data
+    
+    # TODO: add permission check
+    
     user = User.find_by_id(params[:user])
     issues = Issue.find(:all,
                         :conditions => [ "estimated_hours > 0 AND assigned_to_id = ?", user.id ])
@@ -22,13 +28,16 @@ class ChargeController < ApplicationController
     workload.obs_start_date = Date.parse(params[:start])
     workload.obs_end_date = Date.parse(params[:stop])
     workload.period_type = params[:period]
-    puts 'create workload : ' + workload.inspect
+    # add issues take in account for workload computation
     issues.each do |issue|
       workload.add_issue(issue)
     end
+    # compute datas from issue list 
     datas = workload.compute_data
+    # compute vertical axis limit and step
     step = ((workload.max_hour.to_f/5.0).divmod(10)[0]+1)*10
     max = (workload.max_hour.to_f.divmod(step)[0]+1)*step
+    
     values = []
     labels = []
     datas.keys.sort.each do |date|
@@ -44,10 +53,13 @@ class ChargeController < ApplicationController
         date.to_s
       end
       
-      
+      # add data and tip (popup on bar)  
       values.push( { "top" => datas[date].to_s , "tip" => print_date + ' : #val#' } )
+      # add horizontal label for this bar
       labels.push( print_date ) 
     end
+    
+    # buil json object defining graph
     json ={ "title" => { "text" => "Workload for " + user.name },
             "elements" => [ 
       { "type" => "bar_filled", 
