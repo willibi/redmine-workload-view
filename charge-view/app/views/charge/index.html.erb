@@ -1,7 +1,7 @@
 <%=javascript_include_tag("swfobject.js",:plugin => "charge-view")%>
-<%start = Date.new(2009,6,1)%>
-<%stop = Date.new(2011,1,1)%>
-<%period = 'month'%>
+<%start = Date.new(2010,12,1)%>
+<%stop = Date.new(2011,2,1)%>
+<%period = 'day'%>
 <%for user in @users%>
 	<%if user_estimated_hours(user) > 0%>
 		<%url = url_for(:action => 'data', :controller => 'charge') %>

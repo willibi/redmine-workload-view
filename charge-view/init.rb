@@ -1,8 +1,8 @@
 require 'redmine'
 
 Redmine::Plugin.register :project_charge do
-  name 'Redmine Charge plugin'
-  author 'Gilles Ballanger'
+  name 'Redmine Workload plugin'
+  author 'Willi Bi'
   description 'Compute and display Human charge on project'
   version '0.0.0'
 
