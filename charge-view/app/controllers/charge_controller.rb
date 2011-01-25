@@ -25,6 +25,8 @@ class ChargeController < ApplicationController
     issues = Issue.find(:all,
                         :conditions => [ "estimated_hours > 0 AND assigned_to_id = ?", user.id ])
     workload = Workload.new
+    workload.add_user(user)
+    workload.compute_time_entry
     workload.obs_start_date = Date.parse(params[:start])
     workload.obs_end_date = Date.parse(params[:stop])
     workload.period_type = params[:period]
@@ -34,11 +36,13 @@ class ChargeController < ApplicationController
     end
     # compute datas from issue list 
     datas = workload.compute_data
+    times = workload.time_entries
     # compute vertical axis limit and step
     step = ((workload.max_hour.to_f/5.0).divmod(10)[0]+1)*10
     max = (workload.max_hour.to_f.divmod(step)[0]+1)*step
     
     values = []
+    time_values = []
     labels = []
     datas.keys.sort.each do |date|
       # compute label according to period type
@@ -56,7 +60,10 @@ class ChargeController < ApplicationController
       # add data and tip (popup on bar)  
       values.push( { "top" => datas[date].to_s , "tip" => print_date + ' : #val#' } )
       # add horizontal label for this bar
-      labels.push( print_date ) 
+      labels.push( print_date )
+      # add time entry data
+      time_values.push(times[date])
+      puts("add " + times[date].to_s)
     end
     
     # buil json object defining graph
@@ -65,8 +72,16 @@ class ChargeController < ApplicationController
       { "type" => "bar_filled", 
                  "colour" => "#E2D66A",
                  "outline-colour" => "#577261",
-                 "values" => values
-      } ],
+                 "values" => values }, 
+      { "type" => "line", 
+                 "values" => time_values, 
+                 "dot-style" => { "type" => "solid-dot", 
+                                  "dot-size" => 3, 
+                                  "halo-size" => 1, 
+                                  "colour" => "#3D5C56" }, 
+                 "width" => 2, 
+                 "colour" => "#3D5C56" }
+      ],
             "y_axis" => { "min" => 0,"max" => max.to_s, "steps" => step.to_s },
             "x_axis" => { "labels" => { "rotate" => -45, "labels"  => labels} }, 
             "bg_colour" => "#FFFFFF" 

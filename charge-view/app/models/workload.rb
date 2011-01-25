@@ -14,6 +14,7 @@ class Workload
   attr_accessor :obs_start_date         # start of workload range
   attr_accessor :obs_end_date           # end of workload range
   attr_accessor :period_type            # one of 'year', 'month', 'week', 'day'
+  attr_accessor :compute_time_entry     # boolean use to add time-entry report (default false)
   
   WEEKDAY_NUMBERS = (1..5)              # define working day list 
                                         # 0 is sunday
@@ -24,19 +25,33 @@ class Workload
     # result is an hash table with a list of period
     # each period { date => hours }
     @result_hours = {}
+    @result_time_entry = {}
+
     
     @issue_list = []
+    @user_list = []
     
     @max_hour_value = 0.0
+    @max_time_entry = 0.0
     
     # used to execute data computation in case max hours is call before data
     @data_computed = false
+    
+    # default value : do not compute time entry
+    @compute_time_entry = false
     
   end
   
   # add an issue to workload
   def add_issue(issue)
     @issue_list.push(issue)
+  end
+  
+  # add a user to compute past time
+  # if this list is empty all user's time entry are taken
+  # in account
+  def add_user(user)
+    @user_list.push(user)
   end
   
   # compute and get data result
@@ -49,12 +64,16 @@ class Workload
       # get period start date according to period_type
       p_date = get_period_date(date)
       @result_hours[p_date] = 0.0
+      @result_time_entry[p_date] = 0.0
     end
     puts 'compute ' + @issue_list.length.to_s + ' issues'
     
+    full_period_start = get_period_date(@obs_start_date)
+    full_period_end = get_end_period_date(@obs_end_date)
+    
     # parse each issue
     @issue_list.each do |issue|
-      
+
       # compute issue start date
       if issue.start_date.nil?
         start_date = issue.created_on
@@ -76,14 +95,14 @@ class Workload
       end
       
       # for each working days
-       (start_date..due_date).each do |date|
+      (start_date..due_date).each do |date|
 
         # do not add hours for not working day
         if WEEKDAY_NUMBERS.include?( date.wday )
         
           # get period start date according to period_type
           p_date = get_period_date(date)
-          if p_date >= get_period_date(@obs_start_date) and p_date <= get_end_period_date(@obs_end_date)
+          if p_date >= full_period_start and p_date <= full_period_end
            
             # add hours working date hours to result
             hours_for_day = issue.estimated_hours.to_f / workabledays
@@ -94,23 +113,47 @@ class Workload
             end
             
             # prepare max hour value
-            if @result[p_date] > @max_hour_value
-              @max_hour_value = @result[p_date] 
+            if @result_hours[p_date] > @max_hour_value
+              @max_hour_value = @result_hours[p_date] 
             end
           end
         end
-      end
+      end      
     end
-    puts "result : " + @result.inspect
+
+    # if asked compute time entries in relation 
+    #if @compute_time_entry
+      puts "start compute time entries"
+      time_entries = TimeEntry.find(:all,
+         :conditions => ["user_id IN (:users) AND spent_on >= (:start) AND spent_on <= (:end)",
+            {
+              :users => @user_list,
+              :start => full_period_start,
+              :end => full_period_end
+            }])
+      time_entries.each do |te|
+        if te.spent_on >= full_period_start and te.spent_on <= full_period_end
+          d = get_period_date(te.spent_on)
+          @result_time_entry[d] += te.hours
+          # prepare max hour value
+          if @result_time_entry[d] > @max_hour_value
+             @max_hour_value = @result_time_entry[d] 
+          end
+        end
+      end
+    #end
+    
     @data_computed = true
-    return @result
+    return @result_hours
   end
   
-  # return maximum hours. call compute_data if not already done
+  # return the time entry compilation
+  def time_entries
+    return @result_time_entry
+  end
+  
+  # return maximum hours
   def max_hour
-    if @data_computed == false
-      self.compute_data
-    end
     return @max_hour_value
   end
   
