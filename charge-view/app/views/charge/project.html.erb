@@ -1,0 +1,26 @@
+<%=javascript_include_tag("swfobject.js",:plugin => "charge-view")%>
+<%start = @start%>
+<%stop = @stop%>
+<%period_list = @period.split(',')%>
+<%=link_to "direct link", :action => 'project', :controller => 'charge', :project => @project.identifier, :start => @start, :stop => @stop, :period => @period%>
+<%graphId=0%>
+<h2><%=@project.name %></h2>
+<% for period in period_list%>
+	<%url = url_for(:action => 'projectData', :controller => 'charge') %>
+	<%url += '?project=' + @project.identifier %>
+	<%url += '&start=' + start.to_s %>
+	<%url += '&stop=' + stop.to_s %>
+	<%url += '&period=' + period %>
+<script type="text/javascript">
+    <%graphId+=1%>
+    		swfobject.embedSWF(
+    		  "<%=image_path('open-flash-chart.swf',:plugin => 'charge-view')%>",
+    		  "workload_<%=graphId%>", "800", "150",
+    		  "9.0.0", "expressInstall.swf",
+    		  {"data-file":"<%=CGI::escape(url)%>"} );
+    		
+</script>
+<div id="workload_<%=graphId%>">
+</div>
+  
+<%end%>

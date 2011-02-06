@@ -1,23 +1,25 @@
-<%=javascript_include_tag("swfobject.js",:plugin => "charge-view")%>
-<%start = Date.new(2010,6,1)%>
-<%stop = Date.new(2011,2,1)%>
-<%period = 'month'%>
-<%for user in @users%>
-	<%if user_estimated_hours(user) > 0%>
-		<%url = url_for(:action => 'data', :controller => 'charge') %>
-		<%url += '?user=' + user.id.to_s %>
-	    <%url += '&start=' + start.to_s %>
-	    <%url += '&stop=' + stop.to_s %>
-	    <%url += '&period=' + period %>
-		<h2><%=user.name%></h2>
-		<script type="text/javascript">
-		swfobject.embedSWF(
-		  "<%=image_path('open-flash-chart.swf',:plugin => 'charge-view')%>",
-		  "workload_<%=user.id%>", "800", "150",
-		  "9.0.0", "expressInstall.swf",
-		  {"data-file":"<%=CGI::escape(url)%>"}
-		  );
-		</script>
-		<div id="workload_<%=user.id%>"></div>
-	<% end %>
-<% end %>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+        <title>Untitled Document</title>
+    </head>
+    <body>
+        <table>
+        	<tr>
+        		<th>User Name</th>
+				<th>Open issues</th>
+				<th>Estimated hours</th>
+        	</tr>
+            <%for user in @users %>
+            <tr>
+            	<td>
+            		<%=link_to user.name, :action => 'user', :controller => 'charge', :login => user.login %>
+				</td>
+				<td><%=issue_count_open_issues(user)%></td>
+				<td><%=user_estimated_hours(user)%></td>
+			</tr>
+            <%end %>
+        </table>
+    </body>
+</html>
