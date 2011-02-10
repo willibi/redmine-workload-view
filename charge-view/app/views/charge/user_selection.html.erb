@@ -1,0 +1,26 @@
+<table>
+    <tr>
+        <th>
+            User Name
+        </th>
+        <th>
+            Open issues
+        </th>
+        <th>
+            Estimated hours
+        </th>
+    </tr>
+    <%for user in @users %>
+    <tr>
+        <td>
+            <%=link_to user.name, :action => 'user', :controller => 'charge', :id_select => user.login %>
+        </td>
+        <td>
+            <%=issue_count_open_issues(user) %>
+        </td>
+        <td>
+            <%=user_estimated_hours(user) %>
+        </td>
+    </tr>
+    <%end %>
+</table>

@@ -1,25 +1,2 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-        <title>Untitled Document</title>
-    </head>
-    <body>
-        <table>
-        	<tr>
-        		<th>User Name</th>
-				<th>Open issues</th>
-				<th>Estimated hours</th>
-        	</tr>
-            <%for user in @users %>
-            <tr>
-            	<td>
-            		<%=link_to user.name, :action => 'user', :controller => 'charge', :login => user.login %>
-				</td>
-				<td><%=issue_count_open_issues(user)%></td>
-				<td><%=user_estimated_hours(user)%></td>
-			</tr>
-            <%end %>
-        </table>
-    </body>
-</html>
+<p><%=link_to "By user workload", :action => 'user_selection', :controller => 'charge'%></p>
+<p><%=link_to "By project indicator", :action => 'project_selection', :controller => 'charge'%></p>

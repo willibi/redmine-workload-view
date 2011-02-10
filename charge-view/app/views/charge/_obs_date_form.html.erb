@@ -1,0 +1,11 @@
+<%form_tag({ :action => action_select, :id_select => id_select },{ :method => 'get' }) do %>
+<p>
+  <label for="start">From:</label>
+  <%= text_field_tag "start", @start %>
+  <%= calendar_for('start') %>
+  <label for="stop">To:</label>
+  <%= text_field_tag "stop", @stop %>
+  <%= calendar_for('stop') %>
+  <%= submit_tag "change period"%>
+</p>
+<%end%>

@@ -1,0 +1,27 @@
+<%= render(:partial => 'obs_date_form', :locals => {:action_select => 'project_selection', :id_select => ''}) %>
+<table>
+    <tr>
+        <th>
+            Project Name
+        </th>
+        <th>
+            Open issues
+        </th>
+    </tr>
+    <%for project in @projects %>
+    <tr>
+        <td>
+            <%=link_to project.name, 
+				:action => 'project', 
+				:controller => 'charge', 
+				:id_select => project.identifier, 
+				:start => @start.to_s, 
+				:stop => @stop.to_s, 
+				:period => @period %>
+        </td>
+        <td>
+            <%=issue_count_project_open_issues(project) %>
+        </td>
+    </tr>
+    <%end %>
+</table>

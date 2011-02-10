@@ -4,7 +4,6 @@ class ChargeController < ApplicationController
   require 'builder'
   require 'date'
   require 'rubygems'
-  require 'json'
   
   layout 'base'
   
@@ -12,45 +11,51 @@ class ChargeController < ApplicationController
   attr_accessor :stop
   attr_accessor :period
   
-  def read_observation_params
+  def index
     
-    @start = params[:start] ? Date.parse(params[:start]) : Date.today
-    @stop = params[:stop] ? Date.parse(params[:stop]) : @start >> 1
-    @period = params[:period] ? params[:period] : 'month'
+    check_allowed
+    
+    read_observation_params()
     
   end
-  
-  def index
+
+  def user_selection
+
+    check_allowed
+    
+    read_observation_params()
+    
     @users = User.find(:all,
-                       :order => "firstName")  
+                       :order => "firstName")
+  
   end
   
   def user
     
-    # TODO: add permission check  
+    check_allowed
     
     read_observation_params()
     
-    login = params[:login] ? params[:login] : "admin" 
+    id = params[:id_select] ? params[:id_select] : "admin" 
     
     @user = User.find(:all,
-                      :conditions => ["login = ?", login],
+                      :conditions => ["id = ?", id],
                       :limit => 1).last
     
   end
   
   def userData
     
-    # TODO: add permission check
+    check_allowed
     
     read_observation_params()
     
-    user_id = params[:user]
+    user_id = params[:id_select]
     
-    user = User.find_by_id(user_id)
+    current_user = User.find_by_id(user_id)
     
     issues = Issue.find(:all,
-      :conditions => [ "estimated_hours > 0 AND assigned_to_id = ?", user.id ])
+      :conditions => [ "estimated_hours > 0 AND assigned_to_id = ?", current_user.id ])
     
     estimated_hours = EstimatedHoursHarvester.new(issues)
     compiler_estimated_hours = DataCompiler.new(@start, @stop, @period, 'sum')
@@ -70,7 +75,7 @@ class ChargeController < ApplicationController
     tcurve.line_colour = '#802020'
     tcurve.fill_colour = '#A04040'
     
-    display = DataDisplayer.new("Workload")
+    display = DataDisplayer.new("Workload by " + @period)
     display.add_curve(wcurve)
     display.add_curve(tcurve)
     
@@ -79,31 +84,41 @@ class ChargeController < ApplicationController
     send_data(json.to_json)
   end
   
-  def project
-    
-    # TODO: add permission check
+  def project_selection
+  
+    check_allowed
     
     read_observation_params()
     
-    identifier = params[:project] ? params[:project] : "test-project"
+    @projects = Project.find(:all, :order => "name") 
+    
+  end
+  
+  def project
+    
+    check_allowed()
+    
+    read_observation_params()
+    
+    identifier = params[:id_select] ? params[:id_select] : "test-project"
     
     @project = Project.find(:all,
                       :conditions => ["identifier = ?", identifier],
                       :limit => 1).last
     
   end
-
+  
   def projectData
     
-    # TODO: add permission check
+    check_allowed()
     
     read_observation_params()
     
-    identifier = params[:project]
+    identifier = params[:id_select]
     
-    project = Project.find(:all, :conditions => { :identifier => identifier } ).last
+    current_project = Project.find(:all, :conditions => { :identifier => identifier } ).last
     
-    issues = project.issues
+    issues = current_project.issues
     
     time_to_resolved = IssueTimeToStateHarvester.new('resolved', issues)
     compiler_time_to_resolved = DataCompiler.new(@start, @stop, @period, 'average')
@@ -111,12 +126,32 @@ class ChargeController < ApplicationController
     
     resolved_curve = CurveData.new(compiler_time_to_resolved)
     resolved_curve.label = "hours to resolved"
-        
-    display = DataDisplayer.new("Reactivity")
+    
+    display = DataDisplayer.new("Reactivity by " + @period)
     display.add_curve(resolved_curve)
     
     json = display.get_json
     
     send_data(json.to_json)    
+  end
+  
+  private
+  
+  def read_observation_params()
+    
+    @start = params[:start] ? Date.parse(params[:start]) : Date.today
+    @stop = params[:stop] ? Date.parse(params[:stop]) : @start >> 1
+    @period = params[:period] ? params[:period] : 'year,month,week,day'
+
+  end
+  
+  def check_allowed()
+    if User.current.allowed_to?(:view_charge, nil, :global => true)
+      # user allowed
+      return
+    else
+      # go to 403 error page
+      render_403
+    end
   end
 end

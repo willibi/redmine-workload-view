@@ -1,26 +1,29 @@
+<div style='z-index:10'>
+<%= render(:partial => 'obs_date_form', :locals => {:action_select => 'project', :id_select => @project.identifier}) %>
+</div>
 <%=javascript_include_tag("swfobject.js",:plugin => "charge-view")%>
 <%start = @start%>
 <%stop = @stop%>
 <%period_list = @period.split(',')%>
-<%=link_to "direct link", :action => 'project', :controller => 'charge', :project => @project.identifier, :start => @start, :stop => @stop, :period => @period%>
 <%graphId=0%>
 <h2><%=@project.name %></h2>
 <% for period in period_list%>
 	<%url = url_for(:action => 'projectData', :controller => 'charge') %>
-	<%url += '?project=' + @project.identifier %>
+	<%url += '?id_select=' + @project.identifier %>
 	<%url += '&start=' + start.to_s %>
 	<%url += '&stop=' + stop.to_s %>
 	<%url += '&period=' + period %>
 <script type="text/javascript">
     <%graphId+=1%>
+			swfobject.param
     		swfobject.embedSWF(
     		  "<%=image_path('open-flash-chart.swf',:plugin => 'charge-view')%>",
     		  "workload_<%=graphId%>", "800", "150",
     		  "9.0.0", "expressInstall.swf",
-    		  {"data-file":"<%=CGI::escape(url)%>"} );
-    		
+    		  {"data-file":"<%=CGI::escape(url)%>"}, 
+			  {"wmode":"transparent"} );    		
 </script>
-<div id="workload_<%=graphId%>">
+<div id="workload_<%=graphId%>" style='z-index:0'>
 </div>
   
 <%end%>

@@ -16,8 +16,12 @@ Redmine::Plugin.register :project_charge do
     :charges, 
     {
       :controller => 'charge', 
-      :action => 'index' 
+      :action => 'index', 
     }, 
-    :caption => 'Charge'
-  
+    :caption => 'Charge',
+    :if => Proc.new {
+      User.current.allowed_to?(:view_charge, nil, :global => true)
+      User.current.admin?
+    }
+    
 end

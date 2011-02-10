@@ -1,4 +1,5 @@
 module ChargeHelper
+  unloadable
   
   def issue_count_open_issues(user)
     return open_issues(user).count
@@ -7,8 +8,17 @@ module ChargeHelper
   def open_issues(user)
     return Issue.find(:all,
                       :conditions => [ "assigned_to_id = ? AND `issue_statuses`.is_closed = 0", user.id ],
-                      :include => [ :status ]
-    )
+                      :include => [ :status ] )
+  end
+  
+  def issue_count_project_open_issues(project)
+    return open_project_issues(project).count
+  end
+  
+  def open_project_issues(project)
+    return Issue.find(:all,
+                      :conditions => [ "project_id = ? AND `issue_statuses`.is_closed = 0" , project.id ],
+                      :include => [ :status ] )
   end
   
   def user_estimated_hours(user)
