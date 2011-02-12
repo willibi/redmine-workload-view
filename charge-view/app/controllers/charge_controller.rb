@@ -36,11 +36,12 @@ class ChargeController < ApplicationController
     
     read_observation_params()
     
-    id = params[:id_select] ? params[:id_select] : "admin" 
+    id = params[:id_select] ? params[:id_select] : "1" 
     
     @user = User.find(:all,
                       :conditions => ["id = ?", id],
                       :limit => 1).last
+    
     
   end
   
@@ -116,9 +117,11 @@ class ChargeController < ApplicationController
     
     identifier = params[:id_select]
     
-    current_project = Project.find(:all, :conditions => { :identifier => identifier } ).last
+    current_project = Project.find(:first, :conditions => { :identifier => identifier } )
     
     issues = current_project.issues
+    
+    add_sub_project_issues(issues,current_project)
     
     time_to_resolved = IssueTimeToStateHarvester.new('resolved', issues)
     compiler_time_to_resolved = DataCompiler.new(@start, @stop, @period, 'average')
@@ -136,6 +139,29 @@ class ChargeController < ApplicationController
   end
   
   private
+  
+  def get_sub_projects(project)
+    return Project.find_by_sql(
+    ["SELECT `projects`.`identifier`
+        FROM `projects`
+        WHERE `projects`.`parent_id` = 
+          (
+            SELECT `projects`.`id` 
+            FROM `projects` 
+            WHERE `projects`.`identifier` = ?
+            AND `projects`.`status` = 1
+          )",project.identifier])
+  end
+  
+  def add_sub_project_issues(issues,current_project)
+    current_project
+    get_sub_projects(current_project).each do |p|
+       p.issues.each do |i|
+         issues.push(i)
+       end
+       add_sub_project_issues(issues, p)
+    end
+  end
   
   def read_observation_params()
     

@@ -1,3 +1,4 @@
+<%= render(:partial => 'obs_date_form', :locals => {:action_select => 'user_selection', :id_select => ''}) %>
 <table>
     <tr>
         <th>
@@ -13,7 +14,13 @@
     <%for user in @users %>
     <tr>
         <td>
-            <%=link_to user.name, :action => 'user', :controller => 'charge', :id_select => user.login %>
+            <%=link_to user.name, 
+				:action => 'user', 
+				:controller => 'charge', 
+				:id_select => user.id,				
+				:start => @start.to_s, 
+				:stop => @stop.to_s, 
+				:period => @period %>
         </td>
         <td>
             <%=issue_count_open_issues(user) %>
