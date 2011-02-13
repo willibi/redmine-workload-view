@@ -1,0 +1,60 @@
+<div style='z-index:10'>
+<%= render(:partial => 'obs_date_form', :locals => {:action_select => 'group', :id_select => @group.id}) %>
+</div>
+<%=javascript_include_tag("swfobject.js",:plugin => "charge-view") %>
+<%start = @start %>
+<%stop = @stop %>
+<%period = @period %>
+<%graphId=0 %>
+<h2><%=@group.to_s %></h2>
+<h3>All users workload</h3>
+<%for period in @period.split(",") %>
+<h4>Workload by <%=period%></h4>
+<%url = url_for(:action => 'groupData', :controller => 'charge') %>
+<%url += '?id_select=' + @group.id.to_s %>
+<%url += '&start=' + start.to_s %>
+<%url += '&stop=' + stop.to_s %>
+<%url += '&period=' + period %>
+<script type="text/javascript">
+        <%graphId+=1%>
+        		swfobject.embedSWF(
+        		  "<%=image_path('open-flash-chart.swf',:plugin => 'charge-view')%>",
+        		  "workload_<%=graphId%>", "800", "150",
+        		  "9.0.0", "expressInstall.swf",
+        		  {"data-file":"<%=CGI::escape(url)%>"},
+			      {"wmode":"transparent"} );
+</script>
+<div id="workload_<%=graphId%>" style='z-index:0'>
+</div>
+<%end %>
+<h3>Workload by user</h3>
+<table>
+<%for user in @group.users %>
+	<tr>
+		<td><%=user.name%></td>
+	<td>
+	<%for period in @period.split(",") %>
+	<%if @period.split(",").size > 1 %>
+    	<h4>Workload by <%=period%></h4>
+  	<%end %>
+	<%url = url_for(:action => 'userData', :controller => 'charge') %>
+	<%url += '?id_select=' + user.id.to_s %>
+	<%url += '&start=' + start.to_s %>
+	<%url += '&stop=' + stop.to_s %>
+	<%url += '&period=' + period %>
+			<script type="text/javascript">
+        <%graphId+=1%>
+        		swfobject.embedSWF(
+        		  "<%=image_path('open-flash-chart.swf',:plugin => 'charge-view')%>",
+        		  "workload_<%=graphId%>", "600", "130",
+        		  "9.0.0", "expressInstall.swf",
+        		  {"data-file":"<%=CGI::escape(url)%>"},
+			      {"wmode":"transparent"} );
+			</script>
+			<div id="workload_<%=graphId%>" style='z-index:0'>
+			</div>
+	<%end %>
+		</td>
+	</tr>
+<%end %>
+</table>
