@@ -18,16 +18,17 @@ class ChargeController < ApplicationController
     read_observation_params()
     
   end
-
+  
   def user_selection
-
+    
     check_allowed
     
     read_observation_params()
     
     @users = User.find(:all,
                        :order => "firstName")
-  
+    @groups = Group.find(:all)
+    
   end
   
   def user
@@ -38,10 +39,9 @@ class ChargeController < ApplicationController
     
     id = params[:id_select] ? params[:id_select] : "1" 
     
-    @user = User.find(:all,
+    @user = User.find(:first,
                       :conditions => ["id = ?", id],
-                      :limit => 1).last
-    
+                      :limit => 1)
     
   end
   
@@ -58,16 +58,70 @@ class ChargeController < ApplicationController
     issues = Issue.find(:all,
       :conditions => [ "estimated_hours > 0 AND assigned_to_id = ?", current_user.id ])
     
+    compiler_time = DataCompiler.new(@start, @stop, @period, 'sum')
+    
+    user_time_entries = TimeEntryFromUserHarvester.new(compiler_time.get_full_period_start,compiler_time.get_full_period_end)
+    user_time_entries.add(user_id)
+    
     estimated_hours = EstimatedHoursHarvester.new(issues)
+    
+    workload_by_issues(compiler_time,estimated_hours,user_time_entries)
+    
+  end
+  
+  def group
+    
+    check_allowed
+    
+    read_observation_params()
+    
+    id = params[:id_select] ? params[:id_select] : "1" 
+    
+    @group = Group.find(:first,
+                      :conditions => ["id = ?", id],
+                      :limit => 1)
+    
+  end
+  
+  def groupData
+    
+    check_allowed
+    
+    read_observation_params()
+    
+    group_id = params[:id_select]
+    
+    current_group = Group.find_by_id(group_id)
+    
+    compiler_time = DataCompiler.new(@start, @stop, @period, 'sum')
+    user_time_entries = TimeEntryFromUserHarvester.new(compiler_time.get_full_period_start,compiler_time.get_full_period_end)
+    estimated_hours = EstimatedHoursHarvester.new([])
+    
+    for current_user in current_group.users
+      
+      for issue in Issue.find(:all,
+         :conditions => [ "estimated_hours > 0 AND assigned_to_id = ?", current_user.id ])
+        estimated_hours.add(issue)
+      end
+      
+      user_time_entries.add(current_user.id)
+      
+    end
+    
+    workload_by_issues(compiler_time,estimated_hours,user_time_entries)
+    
+  end
+  
+  def workload_by_issues(compiler_time,estimated_hours,user_time_entries)
+    
+    read_observation_params()
+    
     compiler_estimated_hours = DataCompiler.new(@start, @stop, @period, 'sum')
     compiler_estimated_hours.add_results(estimated_hours.getResults)
     
     wcurve = CurveData.new(compiler_estimated_hours)
     wcurve.label = "Estimated hours"
     
-    compiler_time = DataCompiler.new(@start, @stop, @period, 'sum')
-    user_time_entries = TimeEntryFromUserHarvester.new(compiler_time.get_full_period_start,compiler_time.get_full_period_end)
-    user_time_entries.add(user_id)
     compiler_time.add_results(user_time_entries.getResults)
     
     tcurve = CurveData.new(compiler_time)
@@ -86,7 +140,7 @@ class ChargeController < ApplicationController
   end
   
   def project_selection
-  
+    
     check_allowed
     
     read_observation_params()
@@ -142,7 +196,7 @@ class ChargeController < ApplicationController
   
   def get_sub_projects(project)
     return Project.find_by_sql(
-    ["SELECT `projects`.`identifier`
+                               ["SELECT `projects`.`identifier`
         FROM `projects`
         WHERE `projects`.`parent_id` = 
           (
@@ -156,10 +210,10 @@ class ChargeController < ApplicationController
   def add_sub_project_issues(issues,current_project)
     current_project
     get_sub_projects(current_project).each do |p|
-       p.issues.each do |i|
-         issues.push(i)
-       end
-       add_sub_project_issues(issues, p)
+      p.issues.each do |i|
+        issues.push(i)
+      end
+      add_sub_project_issues(issues, p)
     end
   end
   
@@ -167,8 +221,24 @@ class ChargeController < ApplicationController
     
     @start = params[:start] ? Date.parse(params[:start]) : Date.today
     @stop = params[:stop] ? Date.parse(params[:stop]) : @start >> 1
-    @period = params[:period] ? params[:period] : 'year,month,week,day'
-
+    @period = params[:period] ? params[:period] : 'month'
+    parray = @period.split(',')
+    if params[:commit] 
+      for p in ['year','month','week','day']
+        if params[p] and not parray.include?(p)
+          parray.push(p)
+        end
+        if params[p].nil? and parray.include?(p)
+          parray.delete(p)
+        end
+      end
+      @period = ''
+      sep = ''
+      for p in parray
+        @period += sep + p
+        sep = ','
+      end
+    end
   end
   
   def check_allowed()

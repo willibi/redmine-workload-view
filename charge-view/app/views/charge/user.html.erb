@@ -7,7 +7,8 @@
 <%period = @period %>
 <%graphId=0 %>
 <h2><%=@user.name %></h2>
-<%for period in Array['year','month','week','day'] %>
+<%for period in @period.split(",") %>
+<h3>Workload by <%=period%></h3>
 <%url = url_for(:action => 'userData', :controller => 'charge') %>
 <%url += '?id_select=' + @user.id.to_s %>
 <%url += '&start=' + start.to_s %>

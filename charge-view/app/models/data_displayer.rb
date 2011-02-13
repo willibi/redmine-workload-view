@@ -73,7 +73,7 @@ class DataDisplayer
     max = (max_value.to_f.divmod(step)[0]+1)*step
     
     # build json object defining graph
-    json ={ "title" => { "text" => @title },
+    json ={ #"title" => { "text" => @title },
             "elements" => elements,
             "y_axis" => { "min" => 0,"max" => max.to_s, "steps" => step.to_s },
             "x_axis" => { "labels" => { "rotate" => -45, "labels"  => labels} }, 

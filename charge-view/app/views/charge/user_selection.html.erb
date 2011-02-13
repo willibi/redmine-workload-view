@@ -1,33 +1,41 @@
 <%= render(:partial => 'obs_date_form', :locals => {:action_select => 'user_selection', :id_select => ''}) %>
+<h2>Group list</h2>
+<table>
+	<tr>
+		<th>Name</th>
+		<th>User count</th>
+	</tr>
+    <%for group in @groups %>
+	<tr>
+		<td><%=link_to group.to_s, 
+				:action => 'group', 
+				:controller => 'charge', 
+				:id_select => group.id,				
+				:start => @start.to_s, 
+				:stop => @stop.to_s, 
+				:period => @period %></td>
+		<td><%=group.users.count%></td>
+	</tr>
+	<%end%>
+</table>
+<h2>User list</h2>
 <table>
     <tr>
-        <th>
-            User Name
-        </th>
-        <th>
-            Open issues
-        </th>
-        <th>
-            Estimated hours
-        </th>
+        <th>User Name</th>
+        <th>Open issues</th>
+        <th>Estimated hours</th>
     </tr>
-    <%for user in @users %>
+	<%for user in @users %>
     <tr>
-        <td>
-            <%=link_to user.name, 
+        <td><%=link_to user.name, 
 				:action => 'user', 
 				:controller => 'charge', 
 				:id_select => user.id,				
 				:start => @start.to_s, 
 				:stop => @stop.to_s, 
-				:period => @period %>
-        </td>
-        <td>
-            <%=issue_count_open_issues(user) %>
-        </td>
-        <td>
-            <%=user_estimated_hours(user) %>
-        </td>
+				:period => @period %></td>
+        <td><%=issue_count_open_issues(user) %></td>
+        <td><%=user_estimated_hours(user) %></td>
     </tr>
-    <%end %>
+    <%end%>
 </table>
