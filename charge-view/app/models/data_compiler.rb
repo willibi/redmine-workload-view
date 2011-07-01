@@ -10,6 +10,7 @@ class DataCompiler
   attr_reader :period_type            # one of 'year', 'month' (default), 'week', 'day'
   attr_reader :input_results          # list of Result object to be compiled
   attr_reader :compilation_mode       # one of 'sum' (default), 'percent', 'average'
+  attr_reader :compiled               # boolean value to define if data has been compiled or not
   
   # this attributes are only set after get_compiled_result call
   attr_reader :max_value              # provide maximum value of the compiled data
@@ -23,6 +24,7 @@ class DataCompiler
     @period_type = period_type
     @compilation_mode = compilation_mode
     @input_results = []
+    @compiled = false
     
     @max_value = 0.0
     
@@ -38,7 +40,7 @@ class DataCompiler
       end
     end
   end
-    
+  
   def dates
     return @slots.keys
   end
@@ -65,38 +67,44 @@ class DataCompiler
   
   # compute and return list of compiled result
   def get_compiled_result
-    
-    all_result_values_sum = 0.0
-    
-    # add all result in coresponding period to compute all periods
-    for result in input_results
-      all_result_values_sum += result.value
-      p_date = get_period_date(result.date)
-      @slots[p_date].value += result.value
-      @slots[p_date].number_of_initial_value += 1
-    end
-    
-    if @compilation_mode == 'average'
-      for slot in @slots.values
-        if slot.number_of_initial_value != 0
-          slot.value = slot.value / slot.number_of_initial_value
+        
+    if @compiled == false
+      
+      all_result_values_sum = 0.0
+      
+      # add all result in coresponding period to compute all periods
+      for result in input_results
+        all_result_values_sum += result.value
+        p_date = get_period_date(result.date)
+        @slots[p_date].value += result.value
+        @slots[p_date].number_of_initial_value += 1
+      end
+      
+      if @compilation_mode == 'average'
+        for slot in @slots.values
+          if slot.number_of_initial_value != 0
+            slot.value = slot.value / slot.number_of_initial_value
+          end
         end
       end
-    end
-    
-    if @compilation_mode == 'percent'
-      for slot in @slots.values
-        if all_result_values_sum != 0
-          slot.value = slot.value * 100.0 / all_result_values_sum
+      
+      if @compilation_mode == 'percent'
+        for slot in @slots.values
+          if all_result_values_sum != 0
+            slot.value = slot.value * 100.0 / all_result_values_sum
+          end
         end
       end
-    end
-    
-    # compute compiled max value
-    for slot in @slots.values
-      if slot.value > @max_value
-        @max_value = slot.value
+      
+      # compute compiled max value
+      for slot in @slots.values
+        if slot.value > @max_value
+          @max_value = slot.value
+        end
       end
+      
+      @compiled = true
+      
     end
     
     final_result = []

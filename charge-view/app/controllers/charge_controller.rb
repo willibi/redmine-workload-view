@@ -65,7 +65,17 @@ class ChargeController < ApplicationController
     
     estimated_hours = EstimatedHoursHarvester.new(issues)
     
-    workload_by_issues(compiler_time,estimated_hours,user_time_entries)
+    display = DataDisplayer.new("Workload by " + @period)
+    
+    w = WorkDayComparator.new
+    
+    display.y_max = w.workabledays(
+          compiler_time.get_full_period_start,
+          compiler_time.get_end_period_date(@start)) * 8
+    #workload_by_issues(compiler_time,estimated_hours,user_time_entries,display)
+    
+    display.y_max = 100.0
+    normalized_workload(compiler_time,estimated_hours,user_time_entries,display)
     
   end
   
@@ -108,19 +118,36 @@ class ChargeController < ApplicationController
       
     end
     
-    workload_by_issues(compiler_time,estimated_hours,user_time_entries)
+    display = DataDisplayer.new("Workload by " + @period)
+    
+    workload_by_issues(compiler_time,estimated_hours,user_time_entries,display)
     
   end
-  
-  def workload_by_issues(compiler_time,estimated_hours,user_time_entries)
+
+  def normalized_workload(compiler_time,estimated_hours,user_time_entries,display)
     
     read_observation_params()
     
     compiler_estimated_hours = DataCompiler.new(@start, @stop, @period, 'sum')
     compiler_estimated_hours.add_results(estimated_hours.getResults)
+
+    compiler_normalized = DataCompiler.new(@start, @stop, @period, 'sum')
     
-    wcurve = CurveData.new(compiler_estimated_hours)
-    wcurve.label = "Estimated hours"
+    for r in compiler_estimated_hours.get_compiled_result
+      w = WorkDayComparator.new()
+      wd = w.workabledays(r.date, compiler_normalized.get_end_period_date(r.date))
+      if wd == 0
+        n = 0.0
+      else
+        n = r.value * 100 / ( 8.0 * wd )
+      end
+      norm_result = Result.new(r.date,n)
+      compiler_normalized.add_result(norm_result)
+    end
+
+    wcurve = CurveData.new(compiler_normalized)
+    wcurve.label = "Estimated workload (%)"
+    wcurve.tool_tip = "workload #val#%"
     
     compiler_time.add_results(user_time_entries.getResults)
     
@@ -129,10 +156,44 @@ class ChargeController < ApplicationController
     tcurve.type = 'line'
     tcurve.line_colour = '#802020'
     tcurve.fill_colour = '#A04040'
+    tcurve.on_right_axis = true
+    tcurve.tool_tip = "#val#h spent"
     
-    display = DataDisplayer.new("Workload by " + @period)
     display.add_curve(wcurve)
     display.add_curve(tcurve)
+    
+    display.y_labels = "#val# %"
+    display.y_labels_right = "#val# h"
+    
+    json = display.get_json
+    
+    send_data(json.to_json)
+
+  end
+
+  def workload_by_issues(compiler_time,estimated_hours,user_time_entries,display)
+    
+    read_observation_params()
+    
+    compiler_estimated_hours = DataCompiler.new(@start, @stop, @period, 'sum')
+    compiler_estimated_hours.add_results(estimated_hours.getResults)
+    
+    wcurve = CurveData.new(compiler_estimated_hours)
+    wcurve.label = "Estimated hours"
+    wcurve.tool_tip = "Estimated #val# h"
+    
+    compiler_time.add_results(user_time_entries.getResults)
+    
+    tcurve = CurveData.new(compiler_time)
+    tcurve.label = "Hours spent"
+    tcurve.type = 'line'
+    tcurve.line_colour = '#802020'
+    tcurve.fill_colour = '#A04040'
+    tcurve.tool_tip = "#val#h spent"
+    
+    display.add_curve(wcurve)
+    display.add_curve(tcurve)
+    display.y_labels = "#val# h"
     
     json = display.get_json
     

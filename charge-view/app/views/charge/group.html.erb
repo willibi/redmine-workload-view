@@ -15,35 +15,44 @@
 <%url += '&start=' + start.to_s %>
 <%url += '&stop=' + stop.to_s %>
 <%url += '&period=' + period %>
-<script type="text/javascript">
+	<script type="text/javascript">
         <%graphId+=1%>
-        		swfobject.embedSWF(
+		swfobject.embedSWF(
         		  "<%=image_path('open-flash-chart.swf',:plugin => 'charge-view')%>",
         		  "workload_<%=graphId%>", "800", "150",
         		  "9.0.0", "expressInstall.swf",
         		  {"data-file":"<%=CGI::escape(url)%>"},
 			      {"wmode":"transparent"} );
-</script>
-<div id="workload_<%=graphId%>" style='z-index:0'>
-</div>
+	</script>
+	<div id="workload_<%=graphId%>" style='z-index:0'>
+	</div>
 <%end %>
 <h3>Workload by user</h3>
 <table>
-<%for user in @group.users %>
+<%for user in @group.users.sort %>
 	<tr>
 		<td><%=user.name%></td>
 	<td>
-	<%for period in @period.split(",") %>
-	<%if @period.split(",").size > 1 %>
+	<%if @group.users.count > 10 %>
+	<%=link_to user.name,
+				:action => 'user',
+				:controller => 'charge',
+				:id_select => user.id,
+				:start => @start.to_s,
+				:stop => @stop.to_s,
+				:period => @period %>
+	<%else%>
+		<%for period in @period.split(",") %>
+		<%if @period.split(",").size > 1 %>
     	<h4>Workload by <%=period%></h4>
-  	<%end %>
-	<%url = url_for(:action => 'userData', :controller => 'charge') %>
-	<%url += '?id_select=' + user.id.to_s %>
-	<%url += '&start=' + start.to_s %>
-	<%url += '&stop=' + stop.to_s %>
-	<%url += '&period=' + period %>
+	  	<%end %>
+		<%url = url_for(:action => 'userData', :controller => 'charge') %>
+		<%url += '?id_select=' + user.id.to_s %>
+		<%url += '&start=' + start.to_s %>
+		<%url += '&stop=' + stop.to_s %>
+		<%url += '&period=' + period %>
 			<script type="text/javascript">
-        <%graphId+=1%>
+		<%graphId+=1%>
         		swfobject.embedSWF(
         		  "<%=image_path('open-flash-chart.swf',:plugin => 'charge-view')%>",
         		  "workload_<%=graphId%>", "600", "130",
@@ -53,7 +62,8 @@
 			</script>
 			<div id="workload_<%=graphId%>" style='z-index:0'>
 			</div>
-	<%end %>
+		<%end%>
+	<%end%>
 		</td>
 	</tr>
 <%end %>

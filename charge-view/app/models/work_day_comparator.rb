@@ -10,6 +10,10 @@ class WorkDayComparator
     @close_hour = 17
   end
   
+  def worked_hours_by_day ()
+    return @close_hour - @open_hour
+  end
+  
   def workabledays (start,stop)
     # convert input in date to avoid building range with time (cause 1s increment in place
     # of 1 day)
