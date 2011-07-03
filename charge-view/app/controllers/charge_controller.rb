@@ -124,8 +124,8 @@ class ChargeController < ApplicationController
     
   end
 
-  def normalized_workload(compiler_time,estimated_hours,user_time_entries,display)
-    
+  def normalized_workload_group(compiler_time,estimated_hours,user_time_entries,display,group_member)
+
     read_observation_params()
     
     compiler_estimated_hours = DataCompiler.new(@start, @stop, @period, 'sum')
@@ -139,7 +139,7 @@ class ChargeController < ApplicationController
       if wd == 0
         n = 0.0
       else
-        n = r.value * 100 / ( 8.0 * wd )
+        n = r.value * 100 / ( 8.0 * wd * group_member )
       end
       norm_result = Result.new(r.date,n)
       compiler_normalized.add_result(norm_result)
@@ -168,6 +168,12 @@ class ChargeController < ApplicationController
     json = display.get_json
     
     send_data(json.to_json)
+
+  end
+
+  def normalized_workload(compiler_time,estimated_hours,user_time_entries,display)
+
+    normalized_workload_group(compiler_time, estimated_hours, user_time_entries, display, 1)
 
   end
 
@@ -226,7 +232,39 @@ class ChargeController < ApplicationController
   
   def projectData
     
-    check_allowed()
+    #check_allowed()
+    
+    #read_observation_params()
+    
+    #identifier = params[:id_select]
+    
+    #current_project = Project.find(:first, :conditions => { :identifier => identifier } )
+    
+    #issues = current_project.issues
+    
+    #add_sub_project_issues(issues,current_project)
+    
+    #time_to_resolved = IssueTimeToStateHarvester.new('resolved', issues)
+    #compiler_time_to_resolved = DataCompiler.new(@start, @stop, @period, 'average')
+    #compiler_time_to_resolved.add_results(time_to_resolved.getResults)
+    
+    #resolved_curve = CurveData.new(compiler_time_to_resolved)
+    #resolved_curve.label = "hours to resolved"
+    
+    #display = DataDisplayer.new("Reactivity by " + @period)
+    #display.add_curve(resolved_curve)
+    
+    #estimated_hours = EstimatedHoursHarvester.new(issues)
+    
+    #display = DataDisplayer.new("Estimated hours by " + @period)
+    
+    #display.add_curve(estimated_hours)
+    
+    #json = display.get_json
+    
+    #send_data(json.to_json)
+
+    check_allowed
     
     read_observation_params()
     
@@ -234,23 +272,31 @@ class ChargeController < ApplicationController
     
     current_project = Project.find(:first, :conditions => { :identifier => identifier } )
     
-    issues = current_project.issues
+    issues = current_project.issues    
+    #issues = Issue.find(:all,
+    #  :conditions => [ "estimated_hours > 0 AND assigned_to_id = ?", current_user.id ])
     
-    add_sub_project_issues(issues,current_project)
+    compiler_time = DataCompiler.new(@start, @stop, @period, 'sum')
     
-    time_to_resolved = IssueTimeToStateHarvester.new('resolved', issues)
-    compiler_time_to_resolved = DataCompiler.new(@start, @stop, @period, 'average')
-    compiler_time_to_resolved.add_results(time_to_resolved.getResults)
+    user_time_entries = TimeEntryFromUserHarvester.new(compiler_time.get_full_period_start,compiler_time.get_full_period_end)
+    for user in current_project.users
+      user_time_entries.add(user.id)  
+    end
     
-    resolved_curve = CurveData.new(compiler_time_to_resolved)
-    resolved_curve.label = "hours to resolved"
+    estimated_hours = EstimatedHoursHarvester.new(issues)
     
-    display = DataDisplayer.new("Reactivity by " + @period)
-    display.add_curve(resolved_curve)
+    display = DataDisplayer.new("Workload by " + @period)
     
-    json = display.get_json
+    w = WorkDayComparator.new
     
-    send_data(json.to_json)    
+    display.y_max = w.workabledays(
+          compiler_time.get_full_period_start,
+          compiler_time.get_end_period_date(@start)) * 8
+    #workload_by_issues(compiler_time,estimated_hours,user_time_entries,display)
+    
+    display.y_max = 100.0
+    normalized_workload_group(compiler_time,estimated_hours,user_time_entries,display,current_project.users.size)
+
   end
   
   private

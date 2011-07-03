@@ -8,7 +8,7 @@
 <%graphId=0%>
 <h2><%=@project.name %></h2>
 <% for period in period_list%>
-<h3>Indicators by <%=period%></h3>
+<h3>Workload by <%=period%> (<%=@project.users.size%> users)</h3>
 	<%url = url_for(:action => 'projectData', :controller => 'charge') %>
 	<%url += '?id_select=' + @project.identifier %>
 	<%url += '&start=' + start.to_s %>

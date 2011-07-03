@@ -167,7 +167,7 @@ class Workload
     end
   end
   
-  # return the lqst date of a period containing provided date
+  # return the last date of a period containing provided date
   def get_end_period_date(date)
     return case @period_type
       when 'year'  then Date.new(date.year + 1,1,1) - 1
