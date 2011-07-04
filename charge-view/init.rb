@@ -9,7 +9,7 @@ Redmine::Plugin.register :project_charge do
   requires_redmine :version_or_higher => '0.8.0'
 
   project_module :charges do
-    permission :view_charge, { :charge => :index }
+    permission :view_charge, { :charge => :index, :charge => :project }
   end
 
   menu :top_menu, 
@@ -23,5 +23,13 @@ Redmine::Plugin.register :project_charge do
       User.current.allowed_to?(:view_charge, nil, :global => true)
       User.current.admin?
     }
+  menu :project_menu, 
+    :charges, 
+    { 
+      :controller => 'charge', 
+      :action => 'project' 
+    }, 
+    :caption => 'Charge',
+    :param => :project_id
     
 end

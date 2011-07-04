@@ -14,7 +14,7 @@
             <%=link_to project.name, 
 				:action => 'project', 
 				:controller => 'charge', 
-				:id_select => project.identifier, 
+				:project_id => project.identifier, 
 				:start => @start.to_s, 
 				:stop => @stop.to_s, 
 				:period => @period %>

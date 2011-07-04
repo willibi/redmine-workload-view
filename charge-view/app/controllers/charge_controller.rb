@@ -178,7 +178,7 @@ class ChargeController < ApplicationController
   end
 
   def workload_by_issues(compiler_time,estimated_hours,user_time_entries,display)
-    
+   
     read_observation_params()
     
     compiler_estimated_hours = DataCompiler.new(@start, @stop, @period, 'sum')
@@ -204,6 +204,7 @@ class ChargeController < ApplicationController
     json = display.get_json
     
     send_data(json.to_json)
+
   end
   
   def project_selection
@@ -222,7 +223,7 @@ class ChargeController < ApplicationController
     
     read_observation_params()
     
-    identifier = params[:id_select] ? params[:id_select] : "test-project"
+    identifier = params[:project_id] ? params[:project_id] : "test-project"
     
     @project = Project.find(:all,
                       :conditions => ["identifier = ?", identifier],
@@ -289,13 +290,10 @@ class ChargeController < ApplicationController
     
     w = WorkDayComparator.new
     
-    display.y_max = w.workabledays(
-          compiler_time.get_full_period_start,
-          compiler_time.get_end_period_date(@start)) * 8
-    #workload_by_issues(compiler_time,estimated_hours,user_time_entries,display)
+    workload_by_issues(compiler_time,estimated_hours,user_time_entries,display)
     
-    display.y_max = 100.0
-    normalized_workload_group(compiler_time,estimated_hours,user_time_entries,display,current_project.users.size)
+    #display.y_max = 100.0
+    #normalized_workload_group(compiler_time,estimated_hours,user_time_entries,display,current_project.users.size)
 
   end
   
