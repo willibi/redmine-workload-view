@@ -1,6 +1,7 @@
 <% p_list = ['year','month','week','day']%>
 <%form_tag({ :action => action_select },{ :method => 'get' }) do %>
 <%= hidden_field_tag('id_select', id_select)%>
+<%= hidden_field_tag('project_id', id_select)%>
 <%= hidden_field_tag('period', @period)%>
 <table>
 	<tr>
