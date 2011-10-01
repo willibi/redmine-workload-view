@@ -47,8 +47,8 @@ class EstimatedHoursHarvester < DataHarvester
     # for each working days
      (start_date..due_date).each do |date|
       
-      # do not add hours for not working day
-      if WEEKDAY_NUMBERS.include?( date.wday )
+      # do not add hours for not working day and issues with sub issues
+      if WEEKDAY_NUMBERS.include?( date.wday ) and not issue.children?
         
         # add hours working date hours to result
         hours_for_day = issue.estimated_hours.to_f / workabledays        
